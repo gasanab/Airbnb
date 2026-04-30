@@ -1,15 +1,48 @@
 // Simple API test script
-// Run with: node test-api.js (make sure server is running on port 3000)
+// Run with: npx tsx test-api.ts (make sure server is running on port 3000)
 
 const BASE_URL = 'http://localhost:3000';
 
-async function testAPI() {
+interface RegisterResponse {
+  id: string;
+  name: string;
+  email: string;
+  username: string;
+  role: string;
+  createdAt: string;
+}
+
+interface LoginResponse {
+  token: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
+}
+
+interface UserData {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface Listing {
+  id: string;
+  title: string;
+  location: string;
+  pricePerNight: number;
+}
+
+async function testAPI(): Promise<void> {
   console.log('🧪 Testing Airbnb API...\n');
 
   try {
     // Test 1: Register a new user
     console.log('1. Testing user registration...');
-    const registerResponse = await fetch(`${BASE_URL}/auth/register`, {
+    const registerResponse = await fetch(`${BASE_URL}/api/v1/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -23,7 +56,7 @@ async function testAPI() {
     });
     
     if (registerResponse.ok) {
-      const user = await registerResponse.json();
+      const user = (await registerResponse.json()) as RegisterResponse;
       console.log('✅ Registration successful:', user.name);
     } else {
       console.log('❌ Registration failed:', await registerResponse.text());
@@ -31,7 +64,7 @@ async function testAPI() {
 
     // Test 2: Login
     console.log('\n2. Testing login...');
-    const loginResponse = await fetch(`${BASE_URL}/auth/login`, {
+    const loginResponse = await fetch(`${BASE_URL}/api/v1/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -40,9 +73,9 @@ async function testAPI() {
       })
     });
 
-    let token = null;
+    let token: string | null = null;
     if (loginResponse.ok) {
-      const loginData = await loginResponse.json();
+      const loginData = (await loginResponse.json()) as LoginResponse;
       token = loginData.token;
       console.log('✅ Login successful, token received');
     } else {
@@ -51,9 +84,9 @@ async function testAPI() {
 
     // Test 3: Get listings (public endpoint)
     console.log('\n3. Testing get listings...');
-    const listingsResponse = await fetch(`${BASE_URL}/listings`);
+    const listingsResponse = await fetch(`${BASE_URL}/api/v1/listings`);
     if (listingsResponse.ok) {
-      const listings = await listingsResponse.json();
+      const listings = (await listingsResponse.json()) as Listing[];
       console.log(`✅ Retrieved ${listings.length} listings`);
     } else {
       console.log('❌ Failed to get listings');
@@ -61,7 +94,7 @@ async function testAPI() {
 
     // Test 4: Test protected endpoint without token
     console.log('\n4. Testing protected endpoint without token...');
-    const protectedResponse = await fetch(`${BASE_URL}/auth/me`);
+    const protectedResponse = await fetch(`${BASE_URL}/api/v1/auth/me`);
     if (protectedResponse.status === 401) {
       console.log('✅ Protected endpoint correctly rejected unauthorized request');
     } else {
@@ -71,11 +104,11 @@ async function testAPI() {
     // Test 5: Test with token (if we have one)
     if (token) {
       console.log('\n5. Testing protected endpoint with token...');
-      const meResponse = await fetch(`${BASE_URL}/auth/me`, {
+      const meResponse = await fetch(`${BASE_URL}/api/v1/auth/me`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (meResponse.ok) {
-        const userData = await meResponse.json();
+        const userData = (await meResponse.json()) as UserData;
         console.log('✅ Protected endpoint accessible with token:', userData.name);
       } else {
         console.log('❌ Protected endpoint failed with token');
@@ -85,7 +118,8 @@ async function testAPI() {
     console.log('\n🎉 API tests completed!');
 
   } catch (error) {
-    console.error('❌ Test error:', error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('❌ Test error:', errorMessage);
     console.log('\n💡 Make sure the server is running: npm run dev');
   }
 }

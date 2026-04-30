@@ -7,9 +7,9 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "src",
+    "noEmit": true
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "prisma/**/*.ts"],
   "exclude": ["node_modules"]
 }

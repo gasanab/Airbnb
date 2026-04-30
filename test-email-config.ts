@@ -1,10 +1,20 @@
 // Quick test script to verify your email configuration
-// Run with: node test-email-config.js
+// Run with: npx tsx test-email-config.ts
 
-require('dotenv/config');
-const nodemailer = require('nodemailer');
+import 'dotenv/config';
+import nodemailer from 'nodemailer';
 
-async function testEmailConfig() {
+interface EmailConfig {
+  host: string;
+  port: number;
+  secure: boolean;
+  auth: {
+    user: string;
+    pass: string;
+  };
+}
+
+async function testEmailConfig(): Promise<void> {
   console.log('🧪 Testing Email Configuration...\n');
 
   // Check environment variables
@@ -24,15 +34,17 @@ async function testEmailConfig() {
   console.log(`🏠 Email Host: ${process.env.EMAIL_HOST}:${process.env.EMAIL_PORT}\n`);
 
   // Test connection
-  const transporter = nodemailer.createTransporter({
-    host: process.env.EMAIL_HOST,
+  const emailConfig: EmailConfig = {
+    host: process.env.EMAIL_HOST as string,
     port: Number(process.env.EMAIL_PORT),
     secure: false,
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
+      user: process.env.EMAIL_USER as string,
+      pass: process.env.EMAIL_PASS as string
     }
-  });
+  };
+
+  const transporter = nodemailer.createTransport(emailConfig);
 
   try {
     console.log('🔗 Testing SMTP connection...');
@@ -80,9 +92,10 @@ async function testEmailConfig() {
 
   } catch (error) {
     console.log('❌ Email configuration failed:');
-    console.log(`   Error: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.log(`   Error: ${errorMessage}`);
     
-    if (error.message.includes('Invalid login')) {
+    if (errorMessage.includes('Invalid login')) {
       console.log('\n💡 Troubleshooting tips:');
       console.log('   1. Make sure 2-Step Verification is enabled on your Gmail');
       console.log('   2. Use an App Password (not your regular Gmail password)');

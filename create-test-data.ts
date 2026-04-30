@@ -1,10 +1,10 @@
 // Script to create complete test data (users + listings) for Postman testing
-// Run with: node create-test-data.js
+// Run with: npx tsx create-test-data.ts
 
-require('dotenv/config');
-const { PrismaClient } = require('@prisma/client');
-const { PrismaPg } = require('@prisma/adapter-pg');
-const bcrypt = require('bcrypt');
+import 'dotenv/config';
+import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import bcrypt from 'bcrypt';
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
@@ -14,7 +14,27 @@ if (!databaseUrl) {
 const adapter = new PrismaPg({ connectionString: databaseUrl });
 const prisma = new PrismaClient({ adapter });
 
-const testUsers = [
+interface TestUser {
+  name: string;
+  email: string;
+  username: string;
+  phone: string;
+  password: string;
+  role: 'HOST' | 'GUEST' | 'ADMIN';
+  bio: string;
+}
+
+interface TestListing {
+  title: string;
+  description: string;
+  location: string;
+  pricePerNight: number;
+  guests: number;
+  type: 'APARTMENT' | 'HOUSE' | 'VILLA' | 'CABIN';
+  amenities: string[];
+}
+
+const testUsers: TestUser[] = [
   {
     name: 'John Host',
     email: 'host@test.com',
@@ -53,7 +73,7 @@ const testUsers = [
   }
 ];
 
-const testListings = [
+const testListings: TestListing[] = [
   {
     title: 'Cozy Beach House',
     description: 'Beautiful beachfront property with stunning ocean views. Perfect for a relaxing getaway.',
@@ -92,7 +112,7 @@ const testListings = [
   }
 ];
 
-async function createTestData() {
+async function createTestData(): Promise<void> {
   console.log('🔧 Creating complete test data for Postman testing...\n');
 
   try {
@@ -150,7 +170,7 @@ async function createTestData() {
     
     // Display credentials for Postman
     console.log('📋 POSTMAN TEST CREDENTIALS:');
-    console.log('=' .repeat(60));
+    console.log('='.repeat(60));
     
     testUsers.forEach(user => {
       console.log(`\n${user.role} USER:`);
@@ -160,7 +180,7 @@ async function createTestData() {
     });
 
     console.log('\n📝 TESTING WORKFLOW:');
-    console.log('=' .repeat(60));
+    console.log('='.repeat(60));
     console.log('1. LOGIN as HOST (host@test.com) to:');
     console.log('   - Create/update/delete listings');
     console.log('   - Upload listing photos');
@@ -179,7 +199,7 @@ async function createTestData() {
     console.log('   - Delete any resource');
 
     console.log('\n🔗 SAMPLE API CALLS:');
-    console.log('=' .repeat(60));
+    console.log('='.repeat(60));
     console.log('• GET /listings - View all listings (no auth needed)');
     console.log('• POST /auth/login - Login with test credentials');
     console.log('• GET /auth/me - Get current user profile');

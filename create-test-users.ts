@@ -1,10 +1,10 @@
 // Script to create test users for Postman testing
-// Run with: node create-test-users.js
+// Run with: npx tsx create-test-users.ts
 
-require('dotenv/config');
-const { PrismaClient } = require('@prisma/client');
-const { PrismaPg } = require('@prisma/adapter-pg');
-const bcrypt = require('bcrypt');
+import 'dotenv/config';
+import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import bcrypt from 'bcrypt';
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
@@ -14,7 +14,17 @@ if (!databaseUrl) {
 const adapter = new PrismaPg({ connectionString: databaseUrl });
 const prisma = new PrismaClient({ adapter });
 
-const testUsers = [
+interface TestUser {
+  name: string;
+  email: string;
+  username: string;
+  phone: string;
+  password: string;
+  role: 'HOST' | 'GUEST' | 'ADMIN';
+  bio: string;
+}
+
+const testUsers: TestUser[] = [
   {
     name: 'John Host',
     email: 'host@test.com',
@@ -62,7 +72,7 @@ const testUsers = [
   }
 ];
 
-async function createTestUsers() {
+async function createTestUsers(): Promise<void> {
   console.log('🔧 Creating test users for Postman testing...\n');
 
   try {
@@ -105,7 +115,7 @@ async function createTestUsers() {
     
     // Display credentials for Postman
     console.log('📋 POSTMAN TEST CREDENTIALS:');
-    console.log('=' .repeat(50));
+    console.log('='.repeat(50));
     
     testUsers.forEach(user => {
       console.log(`\n${user.role} USER:`);

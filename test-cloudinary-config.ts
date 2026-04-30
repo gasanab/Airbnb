@@ -1,10 +1,30 @@
 // Quick test script to verify your Cloudinary configuration
-// Run with: node test-cloudinary-config.js
+// Run with: npx tsx test-cloudinary-config.ts
 
-require('dotenv/config');
-const { v2: cloudinary } = require('cloudinary');
+import 'dotenv/config';
+import { v2 as cloudinary } from 'cloudinary';
 
-async function testCloudinaryConfig() {
+interface CloudinaryUsage {
+  storage: {
+    used_bytes: number;
+  };
+  transformations: {
+    usage: number;
+  };
+  credits: {
+    usage: number;
+  };
+  plan?: string;
+}
+
+interface UploadResult {
+  secure_url: string;
+  public_id: string;
+  width: number;
+  height: number;
+}
+
+async function testCloudinaryConfig(): Promise<void> {
   console.log('☁️ Testing Cloudinary Configuration...\n');
 
   // Check environment variables
@@ -22,7 +42,7 @@ async function testCloudinaryConfig() {
   console.log('✅ All environment variables found');
   console.log(`☁️ Cloud Name: ${process.env.CLOUDINARY_CLOUD_NAME}`);
   console.log(`🔑 API Key: ${process.env.CLOUDINARY_API_KEY}`);
-  console.log(`🔐 API Secret: ${process.env.CLOUDINARY_API_SECRET.substring(0, 8)}...`);
+  console.log(`🔐 API Secret: ${(process.env.CLOUDINARY_API_SECRET as string).substring(0, 8)}...`);
 
   // Configure Cloudinary
   cloudinary.config({
@@ -41,7 +61,7 @@ async function testCloudinaryConfig() {
 
     // Get account usage info
     console.log('\n📈 Getting account information...');
-    const usage = await cloudinary.api.usage();
+    const usage = (await cloudinary.api.usage()) as CloudinaryUsage;
     
     console.log('✅ Account details retrieved:');
     console.log(`   📦 Storage used: ${(usage.storage.used_bytes / 1024 / 1024).toFixed(2)} MB`);
@@ -55,10 +75,10 @@ async function testCloudinaryConfig() {
     // Create a simple 1x1 pixel test image (base64)
     const testImageBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
     
-    const uploadResult = await cloudinary.uploader.upload(testImageBase64, {
+    const uploadResult = (await cloudinary.uploader.upload(testImageBase64, {
       folder: 'airbnb/test',
-      public_id: 'test-image-' + Date.now()
-    });
+      public_id: `test-image-${Date.now()}`
+    })) as UploadResult;
 
     console.log('✅ Test upload successful!');
     console.log(`   🖼️ Image URL: ${uploadResult.secure_url}`);
@@ -76,9 +96,10 @@ async function testCloudinaryConfig() {
 
   } catch (error) {
     console.log('❌ Cloudinary configuration failed:');
-    console.log(`   Error: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.log(`   Error: ${errorMessage}`);
     
-    if (error.message.includes('Invalid API key')) {
+    if (errorMessage.includes('Invalid API key')) {
       console.log('\n💡 Troubleshooting tips:');
       console.log('   1. Double-check your CLOUDINARY_API_KEY');
       console.log('   2. Make sure CLOUDINARY_API_SECRET is correct');
