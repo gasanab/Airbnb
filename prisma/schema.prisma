@@ -1,0 +1,122 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  HOST
+  GUEST
+  ADMIN
+}
+
+enum ListingType {
+  APARTMENT
+  HOUSE
+  VILLA
+  CABIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+model User {
+  id               String    @id @default(uuid())
+  name             String
+  email            String    @unique
+  username         String    @unique
+  phone            String
+  password         String    @default("")
+  role             Role      @default(GUEST)
+  avatar           String?
+  avatarPublicId   String?
+  bio              String?
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @default(now()) @updatedAt
+  listings         Listing[]
+  bookings         Booking[]
+  reviews          Review[]
+
+  @@index([name])
+  @@index([role])
+}
+
+model Listing {
+  id            String         @id @default(uuid())
+  title         String
+  description   String
+  location      String
+  pricePerNight Float
+  guests        Int
+  type          ListingType
+  amenities     String[]
+  rating        Float?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  host          User           @relation(fields: [hostId], references: [id], onDelete: Restrict)
+  hostId        String
+  bookings      Booking[]
+  photos        ListingPhoto[]
+  reviews       Review[]
+
+  @@index([location])
+  @@index([pricePerNight])
+  @@index([type])
+  @@index([hostId])
+  @@index([type, location])
+  @@index([guests])
+}
+
+model Booking {
+  id         String        @id @default(uuid())
+  checkIn    DateTime
+  checkOut   DateTime
+  totalPrice Float
+  guests     Int           @default(1)
+  status     BookingStatus @default(PENDING)
+  createdAt  DateTime      @default(now())
+  guest      User          @relation(fields: [guestId], references: [id], onDelete: Restrict)
+  guestId    String
+  listing    Listing       @relation(fields: [listingId], references: [id], onDelete: Restrict)
+  listingId  String
+
+  @@index([guestId])
+  @@index([listingId])
+  @@index([listingId, checkIn, checkOut])
+  @@index([status])
+}
+
+model ListingPhoto {
+  id        String  @id @default(uuid())
+  url       String
+  publicId  String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  listingId String
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int
+  comment   String
+  userId    String
+  listingId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([listingId])
+  @@index([rating])
+}
